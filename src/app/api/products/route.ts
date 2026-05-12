@@ -28,8 +28,8 @@ export async function POST(request: Request) {
         name: body.name,
         price: Number(body.price),
         description: body.description,
-        category: body.category, // <-- faltaba este
-        image: body.image || null,
+        category: body.category,
+        images: body.images || [], // <-- era 'images' no 'image'
         stock: Number(body.stock) || 0,
       },
     })
@@ -38,6 +38,32 @@ export async function POST(request: Request) {
     console.error(error)
     return NextResponse.json(
       { error: 'Error creating product' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Product ID required' },
+        { status: 400 }
+      )
+    }
+
+    await db.product.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { error: 'Error deleting product' },
       { status: 500 }
     )
   }
