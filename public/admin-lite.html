@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GÉMINA - Admin Lite (Local)</title>
+    <style>
+        :root {
+            --primary: #2D2D2D;
+            --accent: #E3D5CA;
+            --bg: #FDFCFB;
+            --text: #333;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        h1 { border-bottom: 2px solid var(--accent); padding-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 1rem 2rem; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 1rem; }
+        button:hover { opacity: 0.9; }
+        .product-list { margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #f9f9f9; }
+        .delete-btn { background: #ff4444; padding: 0.5rem 1rem; font-size: 0.8rem; }
+        .msg { padding: 1rem; background: #e7f3ff; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GÉMINA Admin Lite ⚙️</h1>
+        <p class="msg">Este panel guarda los datos directamente en tu navegador (localStorage). Es ideal para pruebas rápidas.</p>
+        
+        <form id="productForm">
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="name" required placeholder="Ej: Top Torzado">
+            </div>
+            <div class="form-group">
+                <label>Precio ($)</label>
+                <input type="number" id="price" required placeholder="7700">
+            </div>
+            <div class="form-group">
+                <label>Imagen (URL)</label>
+                <input type="text" id="image" required placeholder="https://images.unsplash.com/...">
+            </div>
+            <button type="submit">Guardar Producto Localmente</button>
+        </form>
+
+        <div class="product-list" id="productList">
+            <h3>Productos Guardados</h3>
+            <div id="list"></div>
+        </div>
+
+        <button onclick="clearAll()" style="background: #666; margin-top: 2rem;">Limpiar Todo y Restaurar Originales</button>
+        <button onclick="window.location.href='/'" style="background: var(--accent); color: var(--primary); margin-left: 1rem;">Ir a la Tienda</button>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'gemina_local_products';
+
+        function loadProducts() {
+            const products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const list = document.getElementById('list');
+            list.innerHTML = products.length ? '' : '<p>No hay productos locales.</p>';
+            
+            products.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = 'product-item';
+                div.innerHTML = `
+                    <span><strong>${p.name}</strong> - $${p.price}</span>
+                    <button class="delete-btn" onclick="deleteProduct(${index})">Eliminar</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('productForm').onsubmit = (e) => {
+            e.preventDefault();
+            const p = {
+                id: 'local-' + Date.now(),
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                images: JSON.stringify([document.getElementById('image').value]),
+                category: 'Local',
+                description: 'Producto cargado desde Admin Lite'
+            };
+            const products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            products.push(p);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+            e.target.reset();
+            loadProducts();
+            alert('¡Producto guardado! Refresca la tienda para verlo.');
+        };
+
+        function deleteProduct(index) {
+            const products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            products.splice(index, 1);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+            loadProducts();
+        }
+
+        function clearAll() {
+            if(confirm('¿Seguro quieres borrar todos los cambios locales?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                loadProducts();
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
