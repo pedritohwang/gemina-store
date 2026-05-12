@@ -16,5 +16,6 @@ const libsql = createClient({
 const adapter = new PrismaLibSQL(libsql)
 
 export const db = globalForPrisma.prisma ?? new PrismaClient({ adapter })
+export const prisma = db
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db

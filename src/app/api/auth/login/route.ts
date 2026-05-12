@@ -1,43 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password } = await request.json()
 
-    const user = await prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { email },
-    });
+    })
 
     if (!user) {
-      console.log("Login fallido: Usuario no encontrado", email);
       return NextResponse.json(
         { error: "Usuario no encontrado" },
-        { status: 401 }
-      );
+        { status: 404 }
+      )
     }
 
-    if (user.password !== password) {
-      console.log("Login fallido: Contraseña incorrecta para", email);
+    const passwordMatch = await bcrypt.compare(password, user.password)
+
+    if (!passwordMatch) {
       return NextResponse.json(
         { error: "Contraseña incorrecta" },
         { status: 401 }
-      );
+      )
     }
 
-    // En un sistema real, aquí generarías un JWT
     return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    })
   } catch (error) {
+    console.error(error)
     return NextResponse.json(
       { error: "Error en el servidor" },
       { status: 500 }
-    );
+    )
   }
 }
