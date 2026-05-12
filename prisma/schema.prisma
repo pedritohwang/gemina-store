@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL") // Vercel Postgres env var
-  directUrl = env("POSTGRES_URL_NON_POOLING") // Vercel Postgres direct url
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Product {
@@ -14,10 +14,10 @@ model Product {
   description     String?
   price           Float
   category        String
-  images          String   @default("[]") // JSON string
+  images          String   @default("[]")
   stock           Int      @default(0)
-  colors          String   @default("[]") // JSON string of objects {hex, name}
-  sizeTable       String   @default("[]") // JSON string
+  colors          String   @default("[]")
+  sizeTable       String   @default("[]")
   isNewCollection Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
