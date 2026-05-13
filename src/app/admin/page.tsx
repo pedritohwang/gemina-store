@@ -1,72 +1,30 @@
-import Link from "next/link";
-import styles from "./admin.module.css";
-import { PrismaClient } from "@prisma/client";
-import DeleteProductButton from "@/components/admin/DeleteProductButton";
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-const prisma = new PrismaClient();
+import { db } from "@/lib/db"
+import AdminClient from "./AdminClient"
 
-async function getProducts() {
-  try {
-    return await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  } catch (error) {
-    console.error("Error loading products", error);
-    return [];
-  }
-}
+export default async function AdminPage() {
+  const [products, faqs, banners, brandConfig] = await Promise.all([
+    db.product.findMany({ orderBy: { createdAt: 'desc' } }),
+    db.fAQ.findMany({ orderBy: { id: 'asc' } }),
+    db.banner.findMany({ orderBy: { id: 'asc' } }),
+    db.brandConfig.findUnique({ where: { id: 'singleton' } })
+  ])
 
-export default async function AdminDashboard() {
-  const products = await getProducts();
+  const parsedProducts = products.map(product => ({
+    ...product,
+    images: JSON.parse(product.images || '[]'),
+    colors: JSON.parse(product.colors || '[]'),
+    sizeTable: JSON.parse(product.sizeTable || '[]'),
+  }))
 
   return (
-    <div className={styles.adminContainer}>
-      <div className={styles.adminHeader}>
-        <h1 className={styles.title}>Panel de Control</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link href="/admin/clientes" className="btn-secondary">
-            👥 Clientes
-          </Link>
-          <Link href="/" className="btn-secondary">
-            Ver Tienda
-          </Link>
-          <Link href="/admin/productos/nuevo" className="btn-primary">
-            + Nuevo Producto
-          </Link>
-        </div>
-      </div>
-
-      {products.length === 0 ? (
-        <p>No hay productos registrados todavía.</p>
-      ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product: any) => (
-              <tr key={product.id}>
-                <td>{product.name}</td>
-                <td>{product.category}</td>
-                <td>${product.price}</td>
-                <td>{product.stock}</td>
-                <td style={{ display: 'flex', alignItems: 'center' }}>
-                  <Link href={`/admin/productos/editar/${product.id}`} style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
-                    Editar
-                  </Link>
-                  <DeleteProductButton id={product.id} name={product.name} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
+    <AdminClient
+      initialProducts={parsedProducts}
+      initialFaqs={faqs}
+      initialBanners={banners}
+      initialBrandConfig={brandConfig}
+    />
+  )
 }
